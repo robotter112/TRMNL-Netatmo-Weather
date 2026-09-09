@@ -75,3 +75,11 @@ custom_fields:
     name: CO₂-Schwelle für "Fenster auf" (ppm)
     description: Ab diesem Wert wird unabhängig von der Temperatur zum Lüften geraten.
     default: '1500'
+  - keyname: lang
+    field_type: select
+    name: Sprache / Language
+    description: Sprache der Beschriftungen. / Label language.
+    default: de
+    options:
+      - Deutsch: de
+      - English: en

@@ -9,9 +9,12 @@ kräftigen Kontrasten.
 
 > *A TRMNL plugin that renders your Netatmo weather station via Home Assistant:
 > indoor/outdoor climate, a CO₂ gauge based on German UBA guideline values,
-> a window-open recommendation and 24 h history charts. UI language is German.*
+> a window-open recommendation and 24 h history charts. Labels switchable
+> between German and English.*
 
-![Vorschau](assets/preview-full.png)
+![Vorschau](assets/preview-winter-de.png)
+
+*19. Februar 2026 — Frost, Tagesgang von −10 °C auf +2 °C und zurück.*
 
 ## Was angezeigt wird
 
@@ -28,9 +31,9 @@ Meldet der Konnektivitätssensor das Außenmodul als offline, ersetzt eine
 schwarze Warnung die Akkuanzeige — sonst zeigt das Display stumm veraltete
 Werte weiter.
 
-| Frost | Hitze |
-|---|---|
-| ![Frost](assets/preview-frost.png) | ![Hitze](assets/preview-heat.png) |
+![Preview](assets/preview-summer-en.png)
+
+*30. Juli 2026, englische Beschriftung — Hitzewarnung und CO₂ über 2000 ppm.*
 
 ## Voraussetzungen
 
@@ -77,6 +80,7 @@ trmnlp serve
 | `ent_batt_out` | Batterie Außenmodul | |
 | `ent_conn_out` | Konnektivität Außenmodul (Binary Sensor) | |
 | `co2_threshold` | Ab wann „Fenster auf" empfohlen wird, in ppm | `1500` |
+| `lang` | Sprache der Beschriftungen: `de` oder `en` | `de` |
 
 ### Token erzeugen
 

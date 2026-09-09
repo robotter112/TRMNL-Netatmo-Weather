@@ -1,5 +1,32 @@
 {%- comment -%} Zeitzone kommt aus APP_TIMEZONE (Europe/Berlin), Sommerzeit automatisch. {%- endcomment -%}
 {%- assign tzoff = 0 -%}
+{%- comment -%} ---------- Sprache / language ---------- {%- endcomment -%}
+{%- assign LANG = trmnl.plugin_settings.custom_fields_values.lang | default: 'de' -%}
+{%- if LANG == 'en' -%}
+  {%- assign L_out='Outside' -%}{%- assign L_in='Inside' -%}
+  {%- assign L_batt='Battery' -%}{%- assign L_offline='Module offline' -%}
+  {%- assign L_hum='humidity' -%}{%- assign L_co2now='CO&#8322; now' -%}
+  {%- assign L_tchart='Outside temperature' -%}{%- assign L_cchart='CO&#8322; inside' -%}
+  {%- assign L_win='Window' -%}{%- assign L_open='open' -%}{%- assign L_closed='closed' -%}
+  {%- assign C1='Fresh air' -%}{%- assign C2='Good' -%}{%- assign C3='Ventilate soon' -%}
+  {%- assign C4='Ventilate' -%}{%- assign C5='Ventilate now!' -%}
+  {%- assign W1='CO&#8322; critical' -%}{%- assign W2='CO&#8322; high' -%}
+  {%- assign W3='cools down' -%}{%- assign W4='warmer outside' -%}{%- assign W5='all good' -%}
+  {%- assign N1='Frost' -%}{%- assign N2='Risk of frost' -%}
+  {%- assign N3='Extreme heat' -%}{%- assign N4='Heat' -%}
+{%- else -%}
+  {%- assign L_out='Draussen' -%}{%- assign L_in='Innen' -%}
+  {%- assign L_batt='Akku' -%}{%- assign L_offline='Modul offline' -%}
+  {%- assign L_hum='Luftfeuchte' -%}{%- assign L_co2now='CO&#8322; jetzt' -%}
+  {%- assign L_tchart='Temperatur draussen' -%}{%- assign L_cchart='CO&#8322; innen' -%}
+  {%- assign L_win='Fenster' -%}{%- assign L_open='auf' -%}{%- assign L_closed='zu' -%}
+  {%- assign C1='Frische Luft' -%}{%- assign C2='Gut' -%}{%- assign C3='Bald lüften' -%}
+  {%- assign C4='Lüften' -%}{%- assign C5='Sofort lüften!' -%}
+  {%- assign W1='CO&#8322; kritisch' -%}{%- assign W2='CO&#8322; hoch' -%}
+  {%- assign W3='k&uuml;hlt ab' -%}{%- assign W4='drau&szlig;en w&auml;rmer' -%}{%- assign W5='passt so' -%}
+  {%- assign N1='Frost' -%}{%- assign N2='Frostgefahr' -%}
+  {%- assign N3='Starke Hitze' -%}{%- assign N4='Hitze' -%}
+{%- endif -%}
 
 {%- assign tpts = IDX_7.data | first -%}
 {%- assign cpts = IDX_9.data | first -%}
@@ -55,11 +82,11 @@
 {%- assign cx = co2 | minus: 400 | times: 1000.0 | divided_by: 1600 -%}
 {%- if cx < 0 -%}{%- assign cx = 0 -%}{%- endif -%}
 {%- if cx > 1000 -%}{%- assign cx = 1000 -%}{%- endif -%}
-{%- if co2 < 800 -%}{%- assign cstat = 'Frische Luft' -%}{%- assign copac = '0.08' -%}
-{%- elsif co2 < 1000 -%}{%- assign cstat = 'Gut' -%}{%- assign copac = '0.18' -%}
-{%- elsif co2 < 1500 -%}{%- assign cstat = 'Bald lüften' -%}{%- assign copac = '0.36' -%}
-{%- elsif co2 < 2000 -%}{%- assign cstat = 'Lüften' -%}{%- assign copac = '0.62' -%}
-{%- else -%}{%- assign cstat = 'Sofort lüften!' -%}{%- assign copac = '0.85' -%}
+{%- if co2 < 800 -%}{%- assign cstat = C1 -%}{%- assign copac = '0.08' -%}
+{%- elsif co2 < 1000 -%}{%- assign cstat = C2 -%}{%- assign copac = '0.18' -%}
+{%- elsif co2 < 1500 -%}{%- assign cstat = C3 -%}{%- assign copac = '0.36' -%}
+{%- elsif co2 < 2000 -%}{%- assign cstat = C4 -%}{%- assign copac = '0.62' -%}
+{%- else -%}{%- assign cstat = C5 -%}{%- assign copac = '0.85' -%}
 {%- endif -%}
 
 {%- assign co2raw = trmnl.plugin_settings.custom_fields_values.co2_threshold | default: '1500' -%}
@@ -67,11 +94,11 @@
 {%- if co2open <= 0 -%}{%- assign co2open = 1500 -%}{%- endif -%}
 {%- assign tin = IDX_2.state | times: 1.0 -%}
 {%- assign tdiff = tin | minus: tnow -%}
-{%- if co2 >= 2000 -%}{%- assign wopen = true -%}{%- assign wtxt = 'CO&#8322; kritisch' -%}
-{%- elsif co2 >= co2open -%}{%- assign wopen = true -%}{%- assign wtxt = 'CO&#8322; hoch' -%}
-{%- elsif tin > 23.0 and tdiff > 1.0 -%}{%- assign wopen = true -%}{%- assign wtxt = 'k&uuml;hlt ab' -%}
-{%- elsif tdiff < -1.0 -%}{%- assign wopen = false -%}{%- assign wtxt = 'drau&szlig;en w&auml;rmer' -%}
-{%- else -%}{%- assign wopen = false -%}{%- assign wtxt = 'passt so' -%}{%- endif -%}
+{%- if co2 >= 2000 -%}{%- assign wopen = true -%}{%- assign wtxt = W1 -%}
+{%- elsif co2 >= co2open -%}{%- assign wopen = true -%}{%- assign wtxt = W2 -%}
+{%- elsif tin > 23.0 and tdiff > 1.0 -%}{%- assign wopen = true -%}{%- assign wtxt = W3 -%}
+{%- elsif tdiff < -1.0 -%}{%- assign wopen = false -%}{%- assign wtxt = W4 -%}
+{%- else -%}{%- assign wopen = false -%}{%- assign wtxt = W5 -%}{%- endif -%}
 
 {%- case IDX_5.state -%}
   {%- when 'up' -%}{%- assign ta = '&#8599;' -%}
@@ -93,11 +120,11 @@
       <div style="display:flex; align-items:stretch; gap:30px; width:100%;">
         <div style="flex:1.25; min-width:0;">
           <div style="display:flex; align-items:baseline; gap:12px;">
-            <span style="font-size:22px; letter-spacing:.06em; text-transform:uppercase; opacity:.65;">Draussen</span>
+            <span style="font-size:22px; letter-spacing:.06em; text-transform:uppercase; opacity:.65;">{{ L_out }}</span>
             {%- if offline -%}
-            <span style="font-size:19px; font-weight:600; background:#000; color:#fff; padding:2px 9px;">Modul offline</span>
+            <span style="font-size:19px; font-weight:600; background:#000; color:#fff; padding:2px 9px;">{{ L_offline }}</span>
             {%- else -%}
-            <span style="font-size:19px; opacity:.5;">Akku {{ IDX_8.state | round: 0 }} %</span>
+            <span style="font-size:19px; opacity:.5;">{{ L_batt }} {{ IDX_8.state | round: 0 }} %</span>
             {%- endif -%}
           </div>
           <div style="display:flex; align-items:center; gap:18px;">
@@ -107,10 +134,10 @@
             </div>
             {%- assign tw = IDX_0.state | times: 1.0 -%}
             {%- assign warn = 'none' -%}
-            {%- if tw < 1 -%}{%- assign warn = 'frost' -%}{%- assign warntxt = 'Frost' -%}
-            {%- elsif tw < 4 -%}{%- assign warn = 'frost' -%}{%- assign warntxt = 'Frostgefahr' -%}
-            {%- elsif tw > 31 -%}{%- assign warn = 'heathot' -%}{%- assign warntxt = 'Starke Hitze' -%}
-            {%- elsif tw > 26 -%}{%- assign warn = 'heat' -%}{%- assign warntxt = 'Hitze' -%}
+            {%- if tw < 1 -%}{%- assign warn = 'frost' -%}{%- assign warntxt = N1 -%}
+            {%- elsif tw < 4 -%}{%- assign warn = 'frost' -%}{%- assign warntxt = N2 -%}
+            {%- elsif tw > 31 -%}{%- assign warn = 'heathot' -%}{%- assign warntxt = N3 -%}
+            {%- elsif tw > 26 -%}{%- assign warn = 'heat' -%}{%- assign warntxt = N4 -%}
             {%- endif -%}
             {%- if warn != 'none' -%}
             <div style="display:flex; align-items:center; gap:9px;">
@@ -142,20 +169,20 @@
             </div>
             {%- endif -%}
           </div>
-          <div style="font-size:26px;">{{ IDX_1.state | round: 0 }} % Luftfeuchte</div>
+          <div style="font-size:26px;">{{ IDX_1.state | round: 0 }} % {{ L_hum }}</div>
         </div>
 
         <div style="width:2px; background:#000; opacity:.18;"></div>
 
         <div style="flex:1.35; min-width:0; display:flex; flex-direction:column;">
-          <span style="font-size:22px; letter-spacing:.06em; text-transform:uppercase; opacity:.65;">Innen</span>
+          <span style="font-size:22px; letter-spacing:.06em; text-transform:uppercase; opacity:.65;">{{ L_in }}</span>
           <div style="display:flex; align-items:center; width:100%;">
             <div>
               <div style="display:flex; align-items:baseline; gap:12px;">
                 <span style="font-size:84px; line-height:1.05; font-weight:300;">{{ tin | round: 1 }}&deg;</span>
                 <span style="font-size:32px; line-height:1;">{{ ia }}</span>
               </div>
-              <div style="font-size:26px;">{{ IDX_3.state | round: 0 }} % Luftfeuchte</div>
+              <div style="font-size:26px;">{{ IDX_3.state | round: 0 }} % {{ L_hum }}</div>
             </div>
             <div style="margin-left:auto; display:flex; flex-direction:column; align-items:center; gap:2px;">
               <svg viewBox="0 0 56 52" style="width:54px; height:50px; display:block;">
@@ -169,7 +196,7 @@
                 <line x1="5" y1="26" x2="51" y2="26" stroke="#000" stroke-width="3"/>
                 {%- endif -%}
               </svg>
-              <span style="font-size:22px; font-weight:600; white-space:nowrap;">Fenster {% if wopen %}auf{% else %}zu{% endif %}</span>
+              <span style="font-size:22px; font-weight:600; white-space:nowrap;">{{ L_win }} {% if wopen %}{{ L_open }}{% else %}{{ L_closed }}{% endif %}</span>
               <span style="font-size:19px; opacity:.6; white-space:nowrap;">{{ wtxt }}</span>
             </div>
           </div>
@@ -178,7 +205,7 @@
 
       <div style="width:100%;">
         <div style="display:flex; justify-content:space-between; align-items:baseline; font-size:21px; white-space:nowrap;">
-          <span style="opacity:.65; letter-spacing:.04em; text-transform:uppercase;">CO&#8322; jetzt</span>
+          <span style="opacity:.65; letter-spacing:.04em; text-transform:uppercase;">{{ L_co2now }}</span>
           <span style="font-size:24px;"><span style="display:inline-block; width:20px; height:20px; background:#000; opacity:{{ copac }}; border:1.5px solid rgba(0,0,0,.5); vertical-align:-2px; margin-right:7px;"></span>{{ cstat }} &middot; <strong>{{ IDX_4.state }} ppm</strong></span>
         </div>
         <svg viewBox="0 0 1000 58" style="width:100%; height:auto; display:block; overflow:visible;">
@@ -199,7 +226,7 @@
 
       <div style="width:100%;">
         <div style="display:flex; justify-content:space-between; align-items:baseline; font-size:21px; white-space:nowrap;">
-          <span style="opacity:.65; letter-spacing:.04em; text-transform:uppercase;">Temperatur draussen &middot; 24 h</span>
+          <span style="opacity:.65; letter-spacing:.04em; text-transform:uppercase;">{{ L_tchart }} &middot; 24 h</span>
           <span style="font-size:23px;">min <strong>{{ tmin | round: 1 }}&deg;</strong> &middot; max <strong>{{ tmax | round: 1 }}&deg;</strong></span>
         </div>
         <svg viewBox="0 0 1000 185" style="width:100%; height:auto; display:block; overflow:visible;">
@@ -216,7 +243,7 @@
 
       <div style="width:100%;">
         <div style="display:flex; justify-content:space-between; align-items:baseline; font-size:21px; white-space:nowrap;">
-          <span style="opacity:.65; letter-spacing:.04em; text-transform:uppercase;">CO&#8322; innen &middot; 24 h</span>
+          <span style="opacity:.65; letter-spacing:.04em; text-transform:uppercase;">{{ L_cchart }} &middot; 24 h</span>
           <span style="font-size:23px;">min <strong>{{ cmin | round: 0 }}</strong> &middot; max <strong>{{ cmax | round: 0 }} ppm</strong></span>
         </div>
         <svg viewBox="0 0 1000 215" style="width:100%; height:auto; display:block; overflow:visible;">
