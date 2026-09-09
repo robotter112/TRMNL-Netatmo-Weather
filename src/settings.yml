@@ -20,66 +20,66 @@ polling_headers: 'Authorization= Bearer {{ ha_token }}'
 refresh_interval: 10
 id: netatmo-weather-co2
 custom_fields:
-  - keyname: ha_url
-    field_type: string
-    name: Home Assistant URL
-    description: Basis-URL ohne Schrägstrich am Ende.
-    placeholder: http://homeassistant.local:8123
-    default: http://homeassistant.local:8123
-  - keyname: ha_token
-    field_type: string
-    name: Long-Lived Access Token
-    description: In Home Assistant unter Profil → Sicherheit → Langlebige Zugriffstokens erzeugen.
-    placeholder: Token hier einfügen
-  - keyname: ent_temp_out
-    field_type: string
-    name: Temperatur außen
-    description: Entity-ID des Außenmoduls.
-    default: sensor.netatmo_aussen_temperatur
-  - keyname: ent_hum_out
-    field_type: string
-    name: Luftfeuchte außen
-    default: sensor.netatmo_aussen_luftfeuchtigkeit
-  - keyname: ent_temp_in
-    field_type: string
-    name: Temperatur innen
-    default: sensor.netatmo_innen_temperatur
-  - keyname: ent_hum_in
-    field_type: string
-    name: Luftfeuchte innen
-    default: sensor.netatmo_innen_luftfeuchtigkeit
-  - keyname: ent_co2
-    field_type: string
-    name: CO₂ innen
-    default: sensor.netatmo_innen_kohlendioxid
-  - keyname: ent_trend_out
-    field_type: string
-    name: Temperatur-Trend außen
-    description: Liefert up / down / stable.
-    default: sensor.netatmo_aussen_temperatur_trend
-  - keyname: ent_trend_in
-    field_type: string
-    name: Temperatur-Trend innen
-    default: sensor.netatmo_innen_temperatur_trend
-  - keyname: ent_batt_out
-    field_type: string
-    name: Batterie Außenmodul
-    default: sensor.netatmo_aussen_batterie
-  - keyname: ent_conn_out
-    field_type: string
-    name: Konnektivität Außenmodul
-    description: Binary Sensor. Steht er nicht auf "on", erscheint eine Offline-Warnung.
-    default: binary_sensor.netatmo_aussen_konnektivitat
-  - keyname: co2_threshold
-    field_type: string
-    name: CO₂-Schwelle für "Fenster auf" (ppm)
-    description: Ab diesem Wert wird unabhängig von der Temperatur zum Lüften geraten.
-    default: '1500'
   - keyname: lang
     field_type: select
     name: Sprache / Language
-    description: Sprache der Beschriftungen. / Label language.
+    description: Sprache aller Beschriftungen auf dem Display. / Label language on the display.
     default: de
     options:
       - Deutsch: de
       - English: en
+  - keyname: ha_url
+    field_type: string
+    name: Home Assistant URL
+    description: Basis-URL ohne Schrägstrich am Ende. / Base URL without trailing slash.
+    placeholder: 'http://homeassistant.local:8123'
+    default: 'http://homeassistant.local:8123'
+  - keyname: ha_token
+    field_type: string
+    name: Long-Lived Access Token
+    description: Home Assistant → Profil → Sicherheit → Langlebige Zugriffstokens. / Profile → Security → Long-lived access tokens.
+    placeholder: Token hier einfügen / paste token here
+  - keyname: ent_temp_out
+    field_type: string
+    name: Temperatur außen / Temperature outside
+    description: Entity-ID des Außenmoduls. / Entity ID of the outdoor module.
+    default: sensor.netatmo_aussen_temperatur
+  - keyname: ent_hum_out
+    field_type: string
+    name: Luftfeuchte außen / Humidity outside
+    default: sensor.netatmo_aussen_luftfeuchtigkeit
+  - keyname: ent_temp_in
+    field_type: string
+    name: Temperatur innen / Temperature inside
+    default: sensor.netatmo_innen_temperatur
+  - keyname: ent_hum_in
+    field_type: string
+    name: Luftfeuchte innen / Humidity inside
+    default: sensor.netatmo_innen_luftfeuchtigkeit
+  - keyname: ent_co2
+    field_type: string
+    name: CO₂ innen / CO₂ inside
+    default: sensor.netatmo_innen_kohlendioxid
+  - keyname: ent_trend_out
+    field_type: string
+    name: Temperatur-Trend außen / Temperature trend outside
+    description: Liefert up / down / stable. / Returns up / down / stable.
+    default: sensor.netatmo_aussen_temperatur_trend
+  - keyname: ent_trend_in
+    field_type: string
+    name: Temperatur-Trend innen / Temperature trend inside
+    default: sensor.netatmo_innen_temperatur_trend
+  - keyname: ent_batt_out
+    field_type: string
+    name: Batterie Außenmodul / Battery outdoor module
+    default: sensor.netatmo_aussen_batterie
+  - keyname: ent_conn_out
+    field_type: string
+    name: Konnektivität Außenmodul / Connectivity outdoor module
+    description: 'Binary Sensor. Nicht "on" ⇒ Offline-Warnung. / Binary sensor. Not "on" ⇒ offline warning.'
+    default: binary_sensor.netatmo_aussen_konnektivitat
+  - keyname: co2_threshold
+    field_type: string
+    name: 'CO₂-Schwelle „Fenster auf" (ppm) / CO₂ threshold "window open"'
+    description: Ab diesem Wert wird unabhängig von der Temperatur zum Lüften geraten. / Above this value ventilation is advised regardless of temperature.
+    default: 1500
