@@ -1,4 +1,6 @@
-<img src="assets/icon.png" width="96" align="right" alt="">
+<p align="center">
+  <img src="assets/icon.png" width="120" alt="">
+</p>
 
 # Netatmo Wetter & Luftqualität
 
