@@ -1,0 +1,77 @@
+---
+name: Netatmo Wetter & Luftqualität
+no_screen_padding: 'no'
+dark_mode: 'no'
+strategy: polling
+polling_verb: get
+polling_url: |-
+  {{ ha_url }}/api/states/{{ ent_temp_out }}
+  {{ ha_url }}/api/states/{{ ent_hum_out }}
+  {{ ha_url }}/api/states/{{ ent_temp_in }}
+  {{ ha_url }}/api/states/{{ ent_hum_in }}
+  {{ ha_url }}/api/states/{{ ent_co2 }}
+  {{ ha_url }}/api/states/{{ ent_trend_out }}
+  {{ ha_url }}/api/states/{{ ent_trend_in }}
+  {{ ha_url }}/api/history/period?minimal_response&significant_changes_only&filter_entity_id={{ ent_temp_out }}
+  {{ ha_url }}/api/states/{{ ent_batt_out }}
+  {{ ha_url }}/api/history/period?minimal_response&significant_changes_only&filter_entity_id={{ ent_co2 }}
+  {{ ha_url }}/api/states/{{ ent_conn_out }}
+polling_headers: 'Authorization= Bearer {{ ha_token }}'
+refresh_interval: 10
+id: netatmo-weather-co2
+custom_fields:
+  - keyname: ha_url
+    field_type: string
+    name: Home Assistant URL
+    description: Basis-URL ohne Schrägstrich am Ende.
+    placeholder: http://homeassistant.local:8123
+    default: http://homeassistant.local:8123
+  - keyname: ha_token
+    field_type: string
+    name: Long-Lived Access Token
+    description: In Home Assistant unter Profil → Sicherheit → Langlebige Zugriffstokens erzeugen.
+    placeholder: Token hier einfügen
+  - keyname: ent_temp_out
+    field_type: string
+    name: Temperatur außen
+    description: Entity-ID des Außenmoduls.
+    default: sensor.netatmo_aussen_temperatur
+  - keyname: ent_hum_out
+    field_type: string
+    name: Luftfeuchte außen
+    default: sensor.netatmo_aussen_luftfeuchtigkeit
+  - keyname: ent_temp_in
+    field_type: string
+    name: Temperatur innen
+    default: sensor.netatmo_innen_temperatur
+  - keyname: ent_hum_in
+    field_type: string
+    name: Luftfeuchte innen
+    default: sensor.netatmo_innen_luftfeuchtigkeit
+  - keyname: ent_co2
+    field_type: string
+    name: CO₂ innen
+    default: sensor.netatmo_innen_kohlendioxid
+  - keyname: ent_trend_out
+    field_type: string
+    name: Temperatur-Trend außen
+    description: Liefert up / down / stable.
+    default: sensor.netatmo_aussen_temperatur_trend
+  - keyname: ent_trend_in
+    field_type: string
+    name: Temperatur-Trend innen
+    default: sensor.netatmo_innen_temperatur_trend
+  - keyname: ent_batt_out
+    field_type: string
+    name: Batterie Außenmodul
+    default: sensor.netatmo_aussen_batterie
+  - keyname: ent_conn_out
+    field_type: string
+    name: Konnektivität Außenmodul
+    description: Binary Sensor. Steht er nicht auf "on", erscheint eine Offline-Warnung.
+    default: binary_sensor.netatmo_aussen_konnektivitat
+  - keyname: co2_threshold
+    field_type: string
+    name: CO₂-Schwelle für "Fenster auf" (ppm)
+    description: Ab diesem Wert wird unabhängig von der Temperatur zum Lüften geraten.
+    default: '1500'

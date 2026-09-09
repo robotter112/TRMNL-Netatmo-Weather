@@ -1,0 +1,246 @@
+{%- comment -%} Zeitzone kommt aus APP_TIMEZONE (Europe/Berlin), Sommerzeit automatisch. {%- endcomment -%}
+{%- assign tzoff = 0 -%}
+
+{%- assign tpts = IDX_7.data | first -%}
+{%- assign cpts = IDX_9.data | first -%}
+
+{%- assign f = tpts | first -%}{%- assign l = tpts | last -%}
+{%- assign t0s = f.last_changed | date: "%s" | times: 1 -%}
+{%- assign t1s = l.last_changed | date: "%s" | times: 1 -%}
+{%- assign tdur = t1s | minus: t0s -%}{%- if tdur <= 0 -%}{%- assign tdur = 86400 -%}{%- endif -%}
+
+{%- assign tmin = 9999.0 -%}{%- assign tmax = -9999.0 -%}
+{%- for p in tpts -%}{%- if p.state != 'unavailable' and p.state != 'unknown' -%}
+  {%- assign v = p.state | times: 1.0 -%}
+  {%- if v < tmin -%}{%- assign tmin = v -%}{%- endif -%}
+  {%- if v > tmax -%}{%- assign tmax = v -%}{%- endif -%}
+{%- endif -%}{%- endfor -%}
+{%- assign tspan = tmax | minus: tmin -%}{%- if tspan <= 0 -%}{%- assign tspan = 1.0 -%}{%- endif -%}
+{%- assign tmid = tmax | plus: tmin | divided_by: 2.0 -%}
+
+{%- assign cmin = 99999.0 -%}{%- assign cmax = -99999.0 -%}
+{%- for p in cpts -%}{%- if p.state != 'unavailable' and p.state != 'unknown' -%}
+  {%- assign v = p.state | times: 1.0 -%}
+  {%- if v < cmin -%}{%- assign cmin = v -%}{%- endif -%}
+  {%- if v > cmax -%}{%- assign cmax = v -%}{%- endif -%}
+{%- endif -%}{%- endfor -%}
+{%- assign cspan = cmax | minus: cmin -%}{%- if cspan <= 0 -%}{%- assign cspan = 1.0 -%}{%- endif -%}
+{%- assign cmid = cmax | plus: cmin | divided_by: 2.0 -%}
+
+{%- capture tpoly -%}{%- for p in tpts -%}{%- if p.state != 'unavailable' and p.state != 'unknown' -%}
+{%- assign v = p.state | times: 1.0 -%}
+{%- assign dx = p.last_changed | date: "%s" | times: 1 | minus: t0s -%}
+{%- assign x = dx | times: 882.0 | divided_by: tdur | plus: 78 -%}
+{%- assign y = tmax | minus: v | times: 149.0 | divided_by: tspan | plus: 16 -%}
+{{ x | round: 1 }},{{ y | round: 1 }} {% endif -%}{%- endfor -%}{%- endcapture -%}
+
+{%- capture cpoly -%}{%- for p in cpts -%}{%- if p.state != 'unavailable' and p.state != 'unknown' -%}
+{%- assign v = p.state | times: 1.0 -%}
+{%- assign dx = p.last_changed | date: "%s" | times: 1 | minus: t0s -%}
+{%- if dx >= 0 -%}
+{%- assign x = dx | times: 882.0 | divided_by: tdur | plus: 78 -%}
+{%- assign y = cmax | minus: v | times: 152.0 | divided_by: cspan | plus: 16 -%}
+{{ x | round: 1 }},{{ y | round: 1 }} {% endif -%}{%- endif -%}{%- endfor -%}{%- endcapture -%}
+
+{%- assign step = tdur | divided_by: 4 -%}
+{%- assign k1 = t0s | plus: step -%}
+{%- assign k2 = k1 | plus: step -%}
+{%- assign k3 = k2 | plus: step -%}
+
+{%- assign tnow = IDX_0.state | times: 1.0 -%}
+{%- assign tcy = tmax | minus: tnow | times: 149.0 | divided_by: tspan | plus: 16 -%}
+{%- assign co2 = IDX_4.state | times: 1.0 -%}
+{%- assign ccy = cmax | minus: co2 | times: 152.0 | divided_by: cspan | plus: 16 -%}
+
+{%- assign cx = co2 | minus: 400 | times: 1000.0 | divided_by: 1600 -%}
+{%- if cx < 0 -%}{%- assign cx = 0 -%}{%- endif -%}
+{%- if cx > 1000 -%}{%- assign cx = 1000 -%}{%- endif -%}
+{%- if co2 < 800 -%}{%- assign cstat = 'Frische Luft' -%}{%- assign copac = '0.08' -%}
+{%- elsif co2 < 1000 -%}{%- assign cstat = 'Gut' -%}{%- assign copac = '0.18' -%}
+{%- elsif co2 < 1500 -%}{%- assign cstat = 'Bald lüften' -%}{%- assign copac = '0.36' -%}
+{%- elsif co2 < 2000 -%}{%- assign cstat = 'Lüften' -%}{%- assign copac = '0.62' -%}
+{%- else -%}{%- assign cstat = 'Sofort lüften!' -%}{%- assign copac = '0.85' -%}
+{%- endif -%}
+
+{%- assign co2raw = trmnl.plugin_settings.custom_fields_values.co2_threshold | default: '1500' -%}
+{%- assign co2open = co2raw | plus: 0 -%}
+{%- if co2open <= 0 -%}{%- assign co2open = 1500 -%}{%- endif -%}
+{%- assign tin = IDX_2.state | times: 1.0 -%}
+{%- assign tdiff = tin | minus: tnow -%}
+{%- if co2 >= 2000 -%}{%- assign wopen = true -%}{%- assign wtxt = 'CO&#8322; kritisch' -%}
+{%- elsif co2 >= co2open -%}{%- assign wopen = true -%}{%- assign wtxt = 'CO&#8322; hoch' -%}
+{%- elsif tin > 23.0 and tdiff > 1.0 -%}{%- assign wopen = true -%}{%- assign wtxt = 'k&uuml;hlt ab' -%}
+{%- elsif tdiff < -1.0 -%}{%- assign wopen = false -%}{%- assign wtxt = 'drau&szlig;en w&auml;rmer' -%}
+{%- else -%}{%- assign wopen = false -%}{%- assign wtxt = 'passt so' -%}{%- endif -%}
+
+{%- case IDX_5.state -%}
+  {%- when 'up' -%}{%- assign ta = '&#8599;' -%}
+  {%- when 'down' -%}{%- assign ta = '&#8600;' -%}
+  {%- else -%}{%- assign ta = '&#8594;' -%}
+{%- endcase -%}
+{%- case IDX_6.state -%}
+  {%- when 'up' -%}{%- assign ia = '&#8599;' -%}
+  {%- when 'down' -%}{%- assign ia = '&#8600;' -%}
+  {%- else -%}{%- assign ia = '&#8594;' -%}
+{%- endcase -%}
+{%- assign offline = false -%}
+{%- if IDX_10.state != 'on' -%}{%- assign offline = true -%}{%- endif -%}
+
+<div class="view view--full">
+  <div class="layout">
+    <div style="display:flex; flex-direction:column; width:100%; height:100%; box-sizing:border-box; gap:8px;">
+
+      <div style="display:flex; align-items:stretch; gap:30px; width:100%;">
+        <div style="flex:1.25; min-width:0;">
+          <div style="display:flex; align-items:baseline; gap:12px;">
+            <span style="font-size:22px; letter-spacing:.06em; text-transform:uppercase; opacity:.65;">Draussen</span>
+            {%- if offline -%}
+            <span style="font-size:19px; font-weight:600; background:#000; color:#fff; padding:2px 9px;">Modul offline</span>
+            {%- else -%}
+            <span style="font-size:19px; opacity:.5;">Akku {{ IDX_8.state | round: 0 }} %</span>
+            {%- endif -%}
+          </div>
+          <div style="display:flex; align-items:center; gap:18px;">
+            <div style="display:flex; align-items:baseline; gap:14px;">
+              <span style="font-size:84px; line-height:1.05; font-weight:300;">{{ tnow | round: 1 }}&deg;</span>
+              <span style="font-size:32px; line-height:1;">{{ ta }}</span>
+            </div>
+            {%- assign tw = IDX_0.state | times: 1.0 -%}
+            {%- assign warn = 'none' -%}
+            {%- if tw < 1 -%}{%- assign warn = 'frost' -%}{%- assign warntxt = 'Frost' -%}
+            {%- elsif tw < 4 -%}{%- assign warn = 'frost' -%}{%- assign warntxt = 'Frostgefahr' -%}
+            {%- elsif tw > 31 -%}{%- assign warn = 'heathot' -%}{%- assign warntxt = 'Starke Hitze' -%}
+            {%- elsif tw > 26 -%}{%- assign warn = 'heat' -%}{%- assign warntxt = 'Hitze' -%}
+            {%- endif -%}
+            {%- if warn != 'none' -%}
+            <div style="display:flex; align-items:center; gap:9px;">
+              <svg viewBox="0 0 48 48" style="width:44px; height:44px; display:block;">
+                {%- if warn == 'frost' -%}
+                <g stroke="#000" stroke-width="3" stroke-linecap="round" fill="none">
+                  <line x1="24" y1="5" x2="24" y2="43"/>
+                  <line x1="7.5" y1="14.5" x2="40.5" y2="33.5"/>
+                  <line x1="40.5" y1="14.5" x2="7.5" y2="33.5"/>
+                  <line x1="24" y1="12" x2="18.5" y2="6.5"/><line x1="24" y1="12" x2="29.5" y2="6.5"/>
+                  <line x1="24" y1="36" x2="18.5" y2="41.5"/><line x1="24" y1="36" x2="29.5" y2="41.5"/>
+                  <line x1="13.6" y1="18" x2="6.6" y2="18"/><line x1="13.6" y1="18" x2="10.1" y2="12"/>
+                  <line x1="34.4" y1="30" x2="41.4" y2="30"/><line x1="34.4" y1="30" x2="37.9" y2="36"/>
+                  <line x1="34.4" y1="18" x2="41.4" y2="18"/><line x1="34.4" y1="18" x2="37.9" y2="12"/>
+                  <line x1="13.6" y1="30" x2="6.6" y2="30"/><line x1="13.6" y1="30" x2="10.1" y2="36"/>
+                </g>
+                {%- else -%}
+                <circle cx="24" cy="24" r="9" stroke="#000" stroke-width="3"
+                        fill="{% if warn == 'heathot' %}#000{% else %}none{% endif %}"/>
+                <g stroke="#000" stroke-width="3" stroke-linecap="round">
+                  <line x1="24" y1="3" x2="24" y2="10"/><line x1="24" y1="38" x2="24" y2="45"/>
+                  <line x1="3" y1="24" x2="10" y2="24"/><line x1="38" y1="24" x2="45" y2="24"/>
+                  <line x1="9.2" y1="9.2" x2="14.2" y2="14.2"/><line x1="33.8" y1="33.8" x2="38.8" y2="38.8"/>
+                  <line x1="38.8" y1="9.2" x2="33.8" y2="14.2"/><line x1="14.2" y1="33.8" x2="9.2" y2="38.8"/>
+                </g>
+                {%- endif -%}
+              </svg>
+              <span style="font-size:21px; font-weight:600; white-space:nowrap;">{{ warntxt }}</span>
+            </div>
+            {%- endif -%}
+          </div>
+          <div style="font-size:26px;">{{ IDX_1.state | round: 0 }} % Luftfeuchte</div>
+        </div>
+
+        <div style="width:2px; background:#000; opacity:.18;"></div>
+
+        <div style="flex:1.35; min-width:0; display:flex; flex-direction:column;">
+          <span style="font-size:22px; letter-spacing:.06em; text-transform:uppercase; opacity:.65;">Innen</span>
+          <div style="display:flex; align-items:center; width:100%;">
+            <div>
+              <div style="display:flex; align-items:baseline; gap:12px;">
+                <span style="font-size:84px; line-height:1.05; font-weight:300;">{{ tin | round: 1 }}&deg;</span>
+                <span style="font-size:32px; line-height:1;">{{ ia }}</span>
+              </div>
+              <div style="font-size:26px;">{{ IDX_3.state | round: 0 }} % Luftfeuchte</div>
+            </div>
+            <div style="margin-left:auto; display:flex; flex-direction:column; align-items:center; gap:2px;">
+              <svg viewBox="0 0 56 52" style="width:54px; height:50px; display:block;">
+                {%- if wopen -%}
+                <rect x="2" y="4" width="20" height="44" fill="none" stroke="#000" stroke-width="3.5"/>
+                <line x1="12" y1="4" x2="12" y2="48" stroke="#000" stroke-width="2"/>
+                <polygon points="26,4 54,0 54,52 26,48" fill="none" stroke="#000" stroke-width="3.5"/>
+                {%- else -%}
+                <rect x="5" y="4" width="46" height="44" fill="none" stroke="#000" stroke-width="3.5"/>
+                <line x1="28" y1="4" x2="28" y2="48" stroke="#000" stroke-width="3"/>
+                <line x1="5" y1="26" x2="51" y2="26" stroke="#000" stroke-width="3"/>
+                {%- endif -%}
+              </svg>
+              <span style="font-size:22px; font-weight:600; white-space:nowrap;">Fenster {% if wopen %}auf{% else %}zu{% endif %}</span>
+              <span style="font-size:19px; opacity:.6; white-space:nowrap;">{{ wtxt }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="width:100%;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; font-size:21px; white-space:nowrap;">
+          <span style="opacity:.65; letter-spacing:.04em; text-transform:uppercase;">CO&#8322; jetzt</span>
+          <span style="font-size:24px;"><span style="display:inline-block; width:20px; height:20px; background:#000; opacity:{{ copac }}; border:1.5px solid rgba(0,0,0,.5); vertical-align:-2px; margin-right:7px;"></span>{{ cstat }} &middot; <strong>{{ IDX_4.state }} ppm</strong></span>
+        </div>
+        <svg viewBox="0 0 1000 58" style="width:100%; height:auto; display:block; overflow:visible;">
+          <rect x="0"     y="4" width="250"   height="24" fill="#000" fill-opacity=".08"/>
+          <rect x="250"   y="4" width="125"   height="24" fill="#000" fill-opacity=".18"/>
+          <rect x="375"   y="4" width="312.5" height="24" fill="#000" fill-opacity=".36"/>
+          <rect x="687.5" y="4" width="312.5" height="24" fill="#000" fill-opacity=".62"/>
+          <rect x="0" y="4" width="1000" height="24" fill="none" stroke="#000" stroke-opacity=".5" stroke-width="1.5"/>
+          <line x1="375" y1="0" x2="375" y2="32" stroke="#000" stroke-opacity=".55" stroke-width="2" stroke-dasharray="4 3"/>
+          <rect x="{{ cx | minus: 2.5 | round: 1 }}" y="0" width="5" height="32" fill="#000"/>
+          <text x="0"     y="52" font-size="19" text-anchor="start"  fill="#000" fill-opacity=".75">400</text>
+          <text x="250"   y="52" font-size="19" text-anchor="middle" fill="#000" fill-opacity=".75">800</text>
+          <text x="375"   y="52" font-size="19" text-anchor="middle" fill="#000" fill-opacity=".75">1000</text>
+          <text x="687.5" y="52" font-size="19" text-anchor="middle" fill="#000" fill-opacity=".75">1500</text>
+          <text x="1000"  y="52" font-size="19" text-anchor="end"    fill="#000" fill-opacity=".75">2000 ppm</text>
+        </svg>
+      </div>
+
+      <div style="width:100%;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; font-size:21px; white-space:nowrap;">
+          <span style="opacity:.65; letter-spacing:.04em; text-transform:uppercase;">Temperatur draussen &middot; 24 h</span>
+          <span style="font-size:23px;">min <strong>{{ tmin | round: 1 }}&deg;</strong> &middot; max <strong>{{ tmax | round: 1 }}&deg;</strong></span>
+        </div>
+        <svg viewBox="0 0 1000 185" style="width:100%; height:auto; display:block; overflow:visible;">
+          <line x1="78" y1="16"   x2="960" y2="16"   stroke="#000" stroke-opacity=".45" stroke-width="2" stroke-dasharray="9 7"/>
+          <line x1="78" y1="90.5" x2="960" y2="90.5" stroke="#000" stroke-opacity=".45" stroke-width="2" stroke-dasharray="9 7"/>
+          <line x1="78" y1="165"  x2="960" y2="165"  stroke="#000" stroke-opacity=".45" stroke-width="2" stroke-dasharray="9 7"/>
+          <text x="68" y="23"    font-size="21" text-anchor="end" fill="#000" fill-opacity=".85">{{ tmax | round: 0 }}&deg;</text>
+          <text x="68" y="97.5" font-size="21" text-anchor="end" fill="#000" fill-opacity=".85">{{ tmid | round: 0 }}&deg;</text>
+          <text x="68" y="172"   font-size="21" text-anchor="end" fill="#000" fill-opacity=".85">{{ tmin | round: 0 }}&deg;</text>
+          <polyline points="{{ tpoly }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="960" cy="{{ tcy | round: 1 }}" r="7.5" fill="#000"/>
+        </svg>
+      </div>
+
+      <div style="width:100%;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; font-size:21px; white-space:nowrap;">
+          <span style="opacity:.65; letter-spacing:.04em; text-transform:uppercase;">CO&#8322; innen &middot; 24 h</span>
+          <span style="font-size:23px;">min <strong>{{ cmin | round: 0 }}</strong> &middot; max <strong>{{ cmax | round: 0 }} ppm</strong></span>
+        </div>
+        <svg viewBox="0 0 1000 215" style="width:100%; height:auto; display:block; overflow:visible;">
+          <line x1="78" y1="16"  x2="960" y2="16"  stroke="#000" stroke-opacity=".45" stroke-width="2" stroke-dasharray="9 7"/>
+          <line x1="78" y1="92" x2="960" y2="92" stroke="#000" stroke-opacity=".45" stroke-width="2" stroke-dasharray="9 7"/>
+          <line x1="78" y1="168" x2="960" y2="168" stroke="#000" stroke-opacity=".45" stroke-width="2" stroke-dasharray="9 7"/>
+          <text x="68" y="23"  font-size="21" text-anchor="end" fill="#000" fill-opacity=".85">{{ cmax | round: 0 }}</text>
+          <text x="68" y="99" font-size="21" text-anchor="end" fill="#000" fill-opacity=".85">{{ cmid | round: 0 }}</text>
+          <text x="68" y="175" font-size="21" text-anchor="end" fill="#000" fill-opacity=".85">{{ cmin | round: 0 }}</text>
+          <polyline points="{{ cpoly }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="960" cy="{{ ccy | round: 1 }}" r="7.5" fill="#000"/>
+          <line x1="78"    y1="168" x2="78"    y2="177" stroke="#000" stroke-opacity=".55" stroke-width="2"/>
+          <line x1="298.5" y1="168" x2="298.5" y2="177" stroke="#000" stroke-opacity=".55" stroke-width="2"/>
+          <line x1="519"   y1="168" x2="519"   y2="177" stroke="#000" stroke-opacity=".55" stroke-width="2"/>
+          <line x1="739.5" y1="168" x2="739.5" y2="177" stroke="#000" stroke-opacity=".55" stroke-width="2"/>
+          <line x1="960"   y1="168" x2="960"   y2="177" stroke="#000" stroke-opacity=".55" stroke-width="2"/>
+          <text x="78"    y="203" font-size="21" text-anchor="middle" fill="#000" fill-opacity=".8">{{ t0s | plus: tzoff | date: "%H:%M" }}</text>
+          <text x="298.5" y="203" font-size="21" text-anchor="middle" fill="#000" fill-opacity=".8">{{ k1  | plus: tzoff | date: "%H:%M" }}</text>
+          <text x="519"   y="203" font-size="21" text-anchor="middle" fill="#000" fill-opacity=".8">{{ k2  | plus: tzoff | date: "%H:%M" }}</text>
+          <text x="739.5" y="203" font-size="21" text-anchor="middle" fill="#000" fill-opacity=".8">{{ k3  | plus: tzoff | date: "%H:%M" }}</text>
+          <text x="960"   y="203" font-size="21" text-anchor="middle" fill="#000" fill-opacity=".8">{{ t1s | plus: tzoff | date: "%H:%M" }}</text>
+        </svg>
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -1,0 +1,18 @@
+# Eintrag fuer https://github.com/bnussbau/trmnl-recipe-catalog
+# In die alphabetisch sortierte Liste einfuegen, dann Pull Request oeffnen.
+# robotter112 ueberall ersetzen.
+
+"robotter112-trmnl-netatmo-weather":
+  name: "Netatmo Wetter & Luftqualität"
+  description: >-
+    Netatmo-Wetterstation über Home Assistant: Innen- und Außenklima,
+    CO₂-Ampel nach UBA-Leitwerten, Lüftungsempfehlung und 24-h-Verläufe.
+  trmnlp:
+    repo: https://github.com/robotter112/TRMNL-Netatmo-Weather
+    zip_url: https://github.com/robotter112/TRMNL-Netatmo-Weather/archive/refs/heads/main.zip
+  logo_url: https://raw.githubusercontent.com/robotter112/TRMNL-Netatmo-Weather/main/assets/icon.png
+  screenshot_url: https://raw.githubusercontent.com/robotter112/TRMNL-Netatmo-Weather/main/assets/preview-full.png
+  license: MIT
+  byos: true
+  author:
+    github: robotter112
