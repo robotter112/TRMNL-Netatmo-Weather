@@ -24,7 +24,7 @@ custom_fields:
     field_type: select
     name: Sprache / Language
     description: Sprache aller Beschriftungen auf dem Display. / Label language on the display.
-    default: de
+    default: en
     options:
       - Deutsch: de
       - English: en

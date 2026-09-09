@@ -68,7 +68,7 @@ trmnlp serve
 
 | Feld | Bedeutung | Beispiel |
 |---|---|---|
-| `lang` | Sprache der Beschriftungen: `de` oder `en` | `de` |
+| `lang` | Sprache der Beschriftungen: `de` oder `en` | `en` |
 | `ha_url` | Basis-URL von Home Assistant, ohne Schrägstrich am Ende | `http://homeassistant.local:8123` |
 | `ha_token` | Long-Lived Access Token | *Profil → Sicherheit* |
 | `ent_temp_out` | Temperatur außen | `sensor.netatmo_aussen_temperatur` |
