@@ -41,6 +41,15 @@
    In den Verlaufsschleifen weiter unten war der Fall laengst abgefangen, bei
    den Momentanwerten nicht. Jeder Wert wird deshalb hier **einmal** geprueft;
    danach benutzt das Blatt nur noch `v_*` und `has_*`. {%- endcomment -%}
+{%- comment -%} Im **Verlauf** steckt derselbe Fall noch einmal, und dort
+   reicht der Vergleich auf „unavailable" nicht: Home Assistant liefert fuer
+   einen Punkt, an dem die Entitaet gar nicht existierte, ein `null`. Gemessen
+   nach dem Wechsel der Zugangsdaten — je Reihe genau ein solcher Punkt, und
+   `| times` warf darauf. Die Wache unten prueft deshalb ueber `blank` auch auf
+   `null`, nicht nur auf die beiden Texte — und zwar ueber die
+   Wahrheitspruefung `{% if p.state %}`, nicht ueber `== blank`: letzteres
+   griff hier nicht, die Fehler blieben stehen. In Liquid sind einzig `nil`
+   und `false` unwahr, jede Zahl und jeder Text sind wahr. {%- endcomment -%}
 {%- assign MISS = 'unavailable,unknown,none,null,nan' | split: ',' -%}
 {%- assign DASH = '&ndash;' -%}
 
@@ -89,12 +98,13 @@
 {%- assign cpts = IDX_9.data | first -%}
 
 {%- assign f = tpts | first -%}{%- assign l = tpts | last -%}
-{%- assign t0s = f.last_changed | date: "%s" | times: 1 -%}
-{%- assign t1s = l.last_changed | date: "%s" | times: 1 -%}
+{%- assign t0s = 0 -%}{%- assign t1s = 0 -%}
+{%- if f.last_changed -%}{%- assign t0s = f.last_changed | date: "%s" | times: 1 -%}{%- endif -%}
+{%- if l.last_changed -%}{%- assign t1s = l.last_changed | date: "%s" | times: 1 -%}{%- endif -%}
 {%- assign tdur = t1s | minus: t0s -%}{%- if tdur <= 0 -%}{%- assign tdur = 86400 -%}{%- endif -%}
 
 {%- assign tmin = 9999.0 -%}{%- assign tmax = -9999.0 -%}
-{%- for p in tpts -%}{%- if p.state != 'unavailable' and p.state != 'unknown' -%}
+{%- for p in tpts -%}{%- assign okp = false -%}{%- if p.state -%}{%- assign s = p.state | downcase -%}{%- unless s == '' or MISS contains s -%}{%- assign okp = true -%}{%- endunless -%}{%- endif -%}{%- if okp -%}
   {%- assign v = p.state | times: 1.0 -%}
   {%- if v < tmin -%}{%- assign tmin = v -%}{%- endif -%}
   {%- if v > tmax -%}{%- assign tmax = v -%}{%- endif -%}
@@ -103,7 +113,7 @@
 {%- assign tmid = tmax | plus: tmin | divided_by: 2.0 -%}
 
 {%- assign cmin = 99999.0 -%}{%- assign cmax = -99999.0 -%}
-{%- for p in cpts -%}{%- if p.state != 'unavailable' and p.state != 'unknown' -%}
+{%- for p in cpts -%}{%- assign okp = false -%}{%- if p.state -%}{%- assign s = p.state | downcase -%}{%- unless s == '' or MISS contains s -%}{%- assign okp = true -%}{%- endunless -%}{%- endif -%}{%- if okp -%}
   {%- assign v = p.state | times: 1.0 -%}
   {%- if v < cmin -%}{%- assign cmin = v -%}{%- endif -%}
   {%- if v > cmax -%}{%- assign cmax = v -%}{%- endif -%}
@@ -111,14 +121,14 @@
 {%- assign cspan = cmax | minus: cmin -%}{%- if cspan <= 0 -%}{%- assign cspan = 1.0 -%}{%- endif -%}
 {%- assign cmid = cmax | plus: cmin | divided_by: 2.0 -%}
 
-{%- capture tpoly -%}{%- for p in tpts -%}{%- if p.state != 'unavailable' and p.state != 'unknown' -%}
+{%- capture tpoly -%}{%- for p in tpts -%}{%- assign okp = false -%}{%- if p.state -%}{%- assign s = p.state | downcase -%}{%- unless s == '' or MISS contains s -%}{%- assign okp = true -%}{%- endunless -%}{%- endif -%}{%- if okp -%}
 {%- assign v = p.state | times: 1.0 -%}
 {%- assign dx = p.last_changed | date: "%s" | times: 1 | minus: t0s -%}
 {%- assign x = dx | times: 882.0 | divided_by: tdur | plus: 78 -%}
 {%- assign y = tmax | minus: v | times: 149.0 | divided_by: tspan | plus: 16 -%}
 {{ x | round: 1 }},{{ y | round: 1 }} {% endif -%}{%- endfor -%}{%- endcapture -%}
 
-{%- capture cpoly -%}{%- for p in cpts -%}{%- if p.state != 'unavailable' and p.state != 'unknown' -%}
+{%- capture cpoly -%}{%- for p in cpts -%}{%- assign okp = false -%}{%- if p.state -%}{%- assign s = p.state | downcase -%}{%- unless s == '' or MISS contains s -%}{%- assign okp = true -%}{%- endunless -%}{%- endif -%}{%- if okp -%}
 {%- assign v = p.state | times: 1.0 -%}
 {%- assign dx = p.last_changed | date: "%s" | times: 1 | minus: t0s -%}
 {%- if dx >= 0 -%}
