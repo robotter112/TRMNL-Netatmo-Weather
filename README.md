@@ -27,6 +27,13 @@ kräftigen Kontrasten.
 | **Fenster-Empfehlung** | gezeichnetes Fenster, offen oder geschlossen, mit Begründung |
 | **CO₂-Balken** | Skala 400–2000 ppm mit Zonen und Pettenkofer-Marke bei 1000 |
 | **Verläufe** | Temperatur außen und CO₂ innen über 24 h, gemeinsame Zeitachse |
+| **Datenstand** | oben rechts, wann der Außenwert zuletzt gemeldet wurde |
+
+Der Zeitstempel oben rechts ist **nicht** die Renderzeit. Er stammt aus
+`last_reported` des Außenfühlers und bleibt stehen, wenn die Anbindung
+abreißt — eine mitlaufende Uhr würde einen Ausfall verschweigen, statt ihn zu
+zeigen. Ältere Home-Assistant-Fassungen ohne `last_reported` fallen auf
+`last_updated` und `last_changed` zurück.
 
 Bei Frost oder Hitze erscheint zusätzlich ein Symbol neben der Außentemperatur.
 Meldet der Konnektivitätssensor das Außenmodul als offline, ersetzt eine
