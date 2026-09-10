@@ -14,6 +14,8 @@
   {%- assign W3='cools down' -%}{%- assign W4='warmer outside' -%}{%- assign W5='all good' -%}
   {%- assign N1='Frost' -%}{%- assign N2='Risk of frost' -%}
   {%- assign N3='Extreme heat' -%}{%- assign N4='Heat' -%}
+  {%- assign L_nodata='No readings' -%}
+  {%- assign L_nodata2='Home Assistant reports all sensors as unavailable' -%}
 {%- else -%}
   {%- assign L_out='Draussen' -%}{%- assign L_in='Innen' -%}
   {%- assign L_batt='Akku' -%}{%- assign L_offline='Modul offline' -%}
@@ -26,7 +28,62 @@
   {%- assign W3='k&uuml;hlt ab' -%}{%- assign W4='drau&szlig;en w&auml;rmer' -%}{%- assign W5='passt so' -%}
   {%- assign N1='Frost' -%}{%- assign N2='Frostgefahr' -%}
   {%- assign N3='Starke Hitze' -%}{%- assign N4='Hitze' -%}
+  {%- assign L_nodata='Keine Messwerte' -%}
+  {%- assign L_nodata2='Home Assistant meldet alle Sensoren als nicht verf&uuml;gbar' -%}
 {%- endif -%}
+
+{%- comment -%} ---------- Ausfaelle abfangen ----------
+   Home Assistant liefert bei einem Ausfall den **Text** „unavailable" oder
+   „unknown" statt einer Zahl. `| times: 1.0` wirft darauf eine interne
+   Ausnahme, und LaraPaper malt den Fehlertext gross aufs Blatt — genau so
+   gesehen, als die Netatmo-Anbindung wegbrach: neun von elf Messwerten waren
+   Text, und aus dem Wetterblatt wurde eine Wand aus „Liquid error".
+   In den Verlaufsschleifen weiter unten war der Fall laengst abgefangen, bei
+   den Momentanwerten nicht. Jeder Wert wird deshalb hier **einmal** geprueft;
+   danach benutzt das Blatt nur noch `v_*` und `has_*`. {%- endcomment -%}
+{%- assign MISS = 'unavailable,unknown,none,null,nan' | split: ',' -%}
+{%- assign DASH = '&ndash;' -%}
+
+{%- assign v_tout = 0.0 -%}{%- assign has_tout = false -%}
+{%- assign s = IDX_0.state | downcase -%}
+{%- unless s == blank or MISS contains s -%}
+  {%- assign v_tout = IDX_0.state | times: 1.0 -%}{%- assign has_tout = true -%}
+{%- endunless -%}
+
+{%- assign v_hout = 0.0 -%}{%- assign has_hout = false -%}
+{%- assign s = IDX_1.state | downcase -%}
+{%- unless s == blank or MISS contains s -%}
+  {%- assign v_hout = IDX_1.state | times: 1.0 -%}{%- assign has_hout = true -%}
+{%- endunless -%}
+
+{%- assign v_tin = 0.0 -%}{%- assign has_tin = false -%}
+{%- assign s = IDX_2.state | downcase -%}
+{%- unless s == blank or MISS contains s -%}
+  {%- assign v_tin = IDX_2.state | times: 1.0 -%}{%- assign has_tin = true -%}
+{%- endunless -%}
+
+{%- assign v_hin = 0.0 -%}{%- assign has_hin = false -%}
+{%- assign s = IDX_3.state | downcase -%}
+{%- unless s == blank or MISS contains s -%}
+  {%- assign v_hin = IDX_3.state | times: 1.0 -%}{%- assign has_hin = true -%}
+{%- endunless -%}
+
+{%- assign v_co2 = 0.0 -%}{%- assign has_co2 = false -%}
+{%- assign s = IDX_4.state | downcase -%}
+{%- unless s == blank or MISS contains s -%}
+  {%- assign v_co2 = IDX_4.state | times: 1.0 -%}{%- assign has_co2 = true -%}
+{%- endunless -%}
+
+{%- assign v_batt = 0.0 -%}{%- assign has_batt = false -%}
+{%- assign s = IDX_8.state | downcase -%}
+{%- unless s == blank or MISS contains s -%}
+  {%- assign v_batt = IDX_8.state | times: 1.0 -%}{%- assign has_batt = true -%}
+{%- endunless -%}
+
+{%- comment -%} Fehlt alles, hat das Blatt nichts zu zeigen. Dann lieber ein
+   klarer Hinweis als eine Seite voller Striche. {%- endcomment -%}
+{%- assign nodata = false -%}
+{%- unless has_tout or has_tin or has_co2 -%}{%- assign nodata = true -%}{%- endunless -%}
 
 {%- assign tpts = IDX_7.data | first -%}
 {%- assign cpts = IDX_9.data | first -%}
@@ -74,9 +131,9 @@
 {%- assign k2 = k1 | plus: step -%}
 {%- assign k3 = k2 | plus: step -%}
 
-{%- assign tnow = IDX_0.state | times: 1.0 -%}
+{%- assign tnow = v_tout -%}
 {%- assign tcy = tmax | minus: tnow | times: 149.0 | divided_by: tspan | plus: 16 -%}
-{%- assign co2 = IDX_4.state | times: 1.0 -%}
+{%- assign co2 = v_co2 -%}
 {%- assign ccy = cmax | minus: co2 | times: 152.0 | divided_by: cspan | plus: 16 -%}
 
 {%- assign cx = co2 | minus: 400 | times: 1000.0 | divided_by: 1600 -%}
@@ -92,9 +149,11 @@
 {%- assign co2raw = trmnl.plugin_settings.custom_fields_values.co2_threshold | default: '1500' -%}
 {%- assign co2open = co2raw | plus: 0 -%}
 {%- if co2open <= 0 -%}{%- assign co2open = 1500 -%}{%- endif -%}
-{%- assign tin = IDX_2.state | times: 1.0 -%}
+{%- assign tin = v_tin -%}
 {%- assign tdiff = tin | minus: tnow -%}
-{%- if co2 >= 2000 -%}{%- assign wopen = true -%}{%- assign wtxt = W1 -%}
+{%- if has_co2 == false and has_tin == false -%}
+  {%- assign wopen = false -%}{%- assign wtxt = DASH -%}
+{%- elsif co2 >= 2000 -%}{%- assign wopen = true -%}{%- assign wtxt = W1 -%}
 {%- elsif co2 >= co2open -%}{%- assign wopen = true -%}{%- assign wtxt = W2 -%}
 {%- elsif tin > 23.0 and tdiff > 1.0 -%}{%- assign wopen = true -%}{%- assign wtxt = W3 -%}
 {%- elsif tdiff < -1.0 -%}{%- assign wopen = false -%}{%- assign wtxt = W4 -%}
@@ -117,6 +176,19 @@
   <div class="layout">
     <div style="display:flex; flex-direction:column; width:100%; height:100%; box-sizing:border-box; gap:8px;">
 
+      {%- if nodata -%}
+      <div style="flex:1 1 auto; display:flex; flex-direction:column; align-items:center;
+                  justify-content:center; gap:18px;">
+        <svg viewBox="0 0 96 96" style="width:96px; height:96px;">
+          <path d="M26 62 A16 16 0 1 1 30 34 A22 22 0 0 1 72 40 A13 13 0 0 1 70 62 Z"
+                fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round"/>
+          <line x1="14" y1="86" x2="82" y2="10" stroke="#000" stroke-width="4"/>
+        </svg>
+        <div style="font-size:30px; letter-spacing:.03em;">{{ L_nodata }}</div>
+        <div style="font-size:20px; opacity:.6;">{{ L_nodata2 }}</div>
+      </div>
+      {%- else -%}
+
       <div style="display:flex; align-items:stretch; gap:30px; width:100%;">
         <div style="flex:1.25; min-width:0;">
           <div style="display:flex; align-items:baseline; gap:12px;">
@@ -124,16 +196,17 @@
             {%- if offline -%}
             <span style="font-size:19px; font-weight:600; background:#000; color:#fff; padding:2px 9px;">{{ L_offline }}</span>
             {%- else -%}
-            <span style="font-size:19px; opacity:.5;">{{ L_batt }} {{ IDX_8.state | round: 0 }} %</span>
+            <span style="font-size:19px; opacity:.5;">{{ L_batt }} {% if has_batt %}{{ v_batt | round: 0 }} %{% else %}{{ DASH }}{% endif %}</span>
             {%- endif -%}
           </div>
           <div style="display:flex; align-items:center; gap:18px;">
             <div style="display:flex; align-items:baseline; gap:14px;">
-              <span style="font-size:84px; line-height:1.05; font-weight:300;">{{ tnow | round: 1 }}&deg;</span>
+              <span style="font-size:84px; line-height:1.05; font-weight:300;">{% if has_tout %}{{ tnow | round: 1 }}&deg;{% else %}{{ DASH }}{% endif %}</span>
               <span style="font-size:32px; line-height:1;">{{ ta }}</span>
             </div>
-            {%- assign tw = IDX_0.state | times: 1.0 -%}
+            {%- assign tw = v_tout -%}
             {%- assign warn = 'none' -%}
+            {%- unless has_tout -%}{%- assign tw = 15.0 -%}{%- endunless -%}
             {%- if tw < 1 -%}{%- assign warn = 'frost' -%}{%- assign warntxt = N1 -%}
             {%- elsif tw < 4 -%}{%- assign warn = 'frost' -%}{%- assign warntxt = N2 -%}
             {%- elsif tw > 31 -%}{%- assign warn = 'heathot' -%}{%- assign warntxt = N3 -%}
@@ -169,7 +242,7 @@
             </div>
             {%- endif -%}
           </div>
-          <div style="font-size:26px;">{{ IDX_1.state | round: 0 }} % {{ L_hum }}</div>
+          <div style="font-size:26px;">{% if has_hout %}{{ v_hout | round: 0 }} %{% else %}{{ DASH }}{% endif %} {{ L_hum }}</div>
         </div>
 
         <div style="width:2px; background:#000; opacity:.18;"></div>
@@ -179,10 +252,10 @@
           <div style="display:flex; align-items:center; width:100%;">
             <div>
               <div style="display:flex; align-items:baseline; gap:12px;">
-                <span style="font-size:84px; line-height:1.05; font-weight:300;">{{ tin | round: 1 }}&deg;</span>
+                <span style="font-size:84px; line-height:1.05; font-weight:300;">{% if has_tin %}{{ tin | round: 1 }}&deg;{% else %}{{ DASH }}{% endif %}</span>
                 <span style="font-size:32px; line-height:1;">{{ ia }}</span>
               </div>
-              <div style="font-size:26px;">{{ IDX_3.state | round: 0 }} % {{ L_hum }}</div>
+              <div style="font-size:26px;">{% if has_hin %}{{ v_hin | round: 0 }} %{% else %}{{ DASH }}{% endif %} {{ L_hum }}</div>
             </div>
             <div style="margin-left:auto; display:flex; flex-direction:column; align-items:center; gap:2px;">
               <svg viewBox="0 0 56 52" style="width:54px; height:50px; display:block;">
@@ -206,7 +279,7 @@
       <div style="width:100%;">
         <div style="display:flex; justify-content:space-between; align-items:baseline; font-size:21px; white-space:nowrap;">
           <span style="opacity:.65; letter-spacing:.04em; text-transform:uppercase;">{{ L_co2now }}</span>
-          <span style="font-size:24px;"><span style="display:inline-block; width:20px; height:20px; background:#000; opacity:{{ copac }}; border:1.5px solid rgba(0,0,0,.5); vertical-align:-2px; margin-right:7px;"></span>{{ cstat }} &middot; <strong>{{ IDX_4.state }} ppm</strong></span>
+          <span style="font-size:24px;"><span style="display:inline-block; width:20px; height:20px; background:#000; opacity:{{ copac }}; border:1.5px solid rgba(0,0,0,.5); vertical-align:-2px; margin-right:7px;"></span>{% if has_co2 %}{{ cstat }} &middot; <strong>{{ v_co2 | round: 0 }} ppm</strong>{% else %}<strong>{{ DASH }}</strong>{% endif %}</span>
         </div>
         <svg viewBox="0 0 1000 58" style="width:100%; height:auto; display:block; overflow:visible;">
           <rect x="0"     y="4" width="250"   height="24" fill="#000" fill-opacity=".08"/>
@@ -237,7 +310,7 @@
           <text x="68" y="97.5" font-size="21" text-anchor="end" fill="#000" fill-opacity=".85">{{ tmid | round: 0 }}&deg;</text>
           <text x="68" y="172"   font-size="21" text-anchor="end" fill="#000" fill-opacity=".85">{{ tmin | round: 0 }}&deg;</text>
           <polyline points="{{ tpoly }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
-          <circle cx="960" cy="{{ tcy | round: 1 }}" r="7.5" fill="#000"/>
+          {%- if has_tout -%}<circle cx="960" cy="{{ tcy | round: 1 }}" r="7.5" fill="#000"/>{%- endif -%}
         </svg>
       </div>
 
@@ -254,7 +327,7 @@
           <text x="68" y="99" font-size="21" text-anchor="end" fill="#000" fill-opacity=".85">{{ cmid | round: 0 }}</text>
           <text x="68" y="175" font-size="21" text-anchor="end" fill="#000" fill-opacity=".85">{{ cmin | round: 0 }}</text>
           <polyline points="{{ cpoly }}" fill="none" stroke="#000" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"/>
-          <circle cx="960" cy="{{ ccy | round: 1 }}" r="7.5" fill="#000"/>
+          {%- if has_co2 -%}<circle cx="960" cy="{{ ccy | round: 1 }}" r="7.5" fill="#000"/>{%- endif -%}
           <line x1="78"    y1="168" x2="78"    y2="177" stroke="#000" stroke-opacity=".55" stroke-width="2"/>
           <line x1="298.5" y1="168" x2="298.5" y2="177" stroke="#000" stroke-opacity=".55" stroke-width="2"/>
           <line x1="519"   y1="168" x2="519"   y2="177" stroke="#000" stroke-opacity=".55" stroke-width="2"/>
@@ -267,6 +340,7 @@
           <text x="960"   y="203" font-size="21" text-anchor="middle" fill="#000" fill-opacity=".8">{{ t1s | plus: tzoff | date: "%H:%M" }}</text>
         </svg>
       </div>
+      {%- endif -%}
 
     </div>
   </div>
